@@ -364,6 +364,10 @@ FodyWeavers.xsd
 # Local .terraform directories
 **/.terraform/*
 .terraform.*
+.terraform/
+
+# Out plan files
+*.out
 
 # .tfstate files
 *.tfstate
@@ -371,6 +375,12 @@ FodyWeavers.xsd
 
 # Crash log files
 crash.log
+
+# Certificates location
+.certs/
+*.key
+*.crt
+*.csr
 
 # Exclude all .tfvars files, which are likely to contain sentitive data, such as
 # password, private keys, and other secrets. These should not be part of version

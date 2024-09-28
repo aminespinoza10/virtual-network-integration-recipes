@@ -78,14 +78,80 @@ API Management is able to expose endpoints using a custom domain rather than the
 It is important to prefix your domain with *, so the same generated domain cert may be used for all the different sub domains.
 The script creates a `.certs` folder that contains each of the `.pfx` certificates for the API Management custom domains and the `.crt` file for the root.
 
-### Deploying the architecture
+## Deploying the architecture
 
-No matter which way you want to go, Bicep or Terraform  go to the folder **pre** to deploy the following set of tools.
+### Step 1: Deploying the prerequisites
+
+In this stage we will deploy the following tools.
 
 - Azure Container Registry
 - Azure Managed Identity
 - Key Vault
 - Log Analytics Workspace
 
-**Note**: We are not using modules as a best practice for Terraform or Bicep just to make the projects more readable and not adding a layer of unnecesary complexity.
+The first step is to create the certificate files that you'll load into Key Vault, to do that just go to the **bash** folder and execute the script.
 
+```bash
+./create-certificate.sh
+```
+
+When prompted, for the first certificate the common name (FQDN) must be **internal** and for the second prompt the common name must be ***.vnet.internal**. The result must be a new folder called **certs** and include six different files.
+
+![Certificates](./media/certificates.png)
+
+After this you can proceed to deploy the infrastructure with Bicep or Terraform.
+
+#### Using Bicep
+
+You can go to the folder **pre** and then run the following command for Bicep.
+
+```bash
+#Create a resource group
+az group create --name internalContainerApps --location eastus2
+
+# Deploy the resources using Bicep
+az deployment group create --resource-group internalContainerApps --template-file main.bicep
+
+```
+
+After deployment, go to the portal and upload the **pfx** files (you need to repeat it with the second pfx file).
+
+![Certificates](./media/kvCertificates.png)
+
+You are ready to go to the second step of the process now!
+
+#### Using terraform
+
+You can go to the folder **pre** and then go to the path [terraform/pre/main.tf](./deploy/terraform/pre/main.tf) to update the passwords for the **pfx** files.
+
+![Certificates](./media/terraformCertificates.png)
+
+After modified you can deploy all your infrastructure.
+
+```bash
+# Initialize terraform
+terraform init
+
+# Execute plan
+terraform plan -out plan.out
+
+# Apply the plan
+terraform apply "plan.out"
+```
+
+No matter which way you want to go, the result of this operation will be like this image.
+
+![Certificates](./media/step1.png)
+
+### Step 2: Deploying the infrastructure
+
+In this stage we will deploy the following tools.
+
+- 1 Virtual network
+- 3 Subnets
+- A network security group (NSG)
+- Api Management
+- Private DNS Zone
+- Application Gateway
+
+### Step 3: Deploying the application

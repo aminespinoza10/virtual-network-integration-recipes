@@ -2,6 +2,8 @@
 
 mkdir -p certs
 
+cd certs
+
 # Generate the root key.
 openssl genrsa -des3 -out root-ca.key 4096
 

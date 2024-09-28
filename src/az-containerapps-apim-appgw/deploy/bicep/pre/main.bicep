@@ -1,9 +1,9 @@
 param location string = resourceGroup().location
 param environmentName string = 'test'
-param keyVaultName string = '${environmentName}-001-kv'
+param keyVaultName string = '${environmentName}-internal-001-kv'
 param miName string = '${environmentName}-mi'
 param logAnalyticsWorkspaceName string = '${environmentName}-logs'
-var acrName = '${environmentName}0apps0acr'
+var acrName = '${environmentName}internalapps0acr'
 
 @allowed([
   'Basic'
@@ -68,6 +68,8 @@ resource kv 'Microsoft.KeyVault/vaults@2022-07-01' = {
     }
   }
 }
+
+
 
 //log analytics workspace
 resource logAnalyticsWorkspace'Microsoft.OperationalInsights/workspaces@2020-03-01-preview' = {
