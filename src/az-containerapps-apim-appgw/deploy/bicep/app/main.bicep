@@ -3,7 +3,7 @@ param environmentName string = 'test'
 param dnsName string = 'vnet.internal'
 
 var apimName = '${environmentName}-001-apim'
-var apiName = 'ping-app'
+var apiName = 'testing-app'
 var acrName = '${environmentName}internalapps0acr'
 
 resource environment 'Microsoft.App/managedEnvironments@2022-06-01-preview' existing = {
@@ -52,7 +52,7 @@ resource minimalApiApp 'Microsoft.App/containerApps@2022-03-01' = {
     template: {
       containers: [
         {
-          image: 'docker.io/aminespinoza/minimalapi:latest'
+          image: '${acr.properties.loginServer}/${apiName}:latest'
           name: apiName
           resources: {
             cpu: '0.25'
