@@ -154,4 +154,19 @@ In this stage we will deploy the following tools.
 - Private DNS Zone
 - Application Gateway
 
+#### Using Bicep
+
+Go to the **infrastructure** folder and execute the following commands:
+
+```bash
+# Deploy the resources using Bicep
+az deployment group create --resource-group internalContainerApps --template-file main.bicep
+```
+
+
+
+
+
+#### Using Terraform
+
 ### Step 3: Deploying the application
