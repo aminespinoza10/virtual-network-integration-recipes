@@ -1,38 +1,44 @@
-// -----------------------------------------------------------------------
-// <copyright file="Program.cs" company="Microsoft Corporation">
-// Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT license. See LICENSE file in the project root for full license information.
-// </copyright>
-// -----------------------------------------------------------------------
+var builder = WebApplication.CreateBuilder(args);
 
-namespace Recipes.AzureWebApps.WeatherForecastAPI
+// Add services to the container.
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
 {
-    using Microsoft.AspNetCore.Hosting;
-    using Microsoft.Extensions.Hosting;
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
-    /// <summary>
-    /// The main entry point for the web API.
-    /// </summary>
-    public class Program
-    {
-        /// <summary>
-        /// The main entry point for the web API.
-        /// </summary>
-        /// <param name="args">Array of arguments to be provided when starting the program.</param>
-        public static void Main(string[] args)
-        {
-            CreateHostBuilder(args).Build().Run();
-        }
+app.UseHttpsRedirection();
 
-        /// <summary>
-        /// Creates the host for the program.
-        /// </summary>
-        /// <param name="args">Array of arguments to be used to build the host.</param>
-        /// <returns>An implementation of IHostBuilder.</returns>
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
+var summaries = new[]
+{
+    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+};
+
+app.MapGet("/weatherforecast", () =>
+{
+    var forecast =  Enumerable.Range(1, 5).Select(index =>
+        new WeatherForecast
+        (
+            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+            Random.Shared.Next(-20, 55),
+            summaries[Random.Shared.Next(summaries.Length)]
+        ))
+        .ToArray();
+    return forecast;
+})
+.WithName("GetWeatherForecast")
+.WithOpenApi();
+
+app.Run();
+
+record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+{
+    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
