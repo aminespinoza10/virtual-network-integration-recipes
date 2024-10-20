@@ -366,9 +366,8 @@ resource "azurerm_monitor_diagnostic_setting" "apim-diagnostic-setting" {
   target_resource_id         = azurerm_api_management.apim.id
   log_analytics_workspace_id = module.app-insights.azurerm_log_analytics_workspace_id
 
-  log {
+  enabled_log {
     category = "GatewayLogs"
-    enabled  = true
   }
 
   metric {
