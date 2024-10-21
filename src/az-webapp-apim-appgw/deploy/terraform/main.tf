@@ -733,19 +733,16 @@ resource "azurerm_monitor_diagnostic_setting" "appgw-diagnostic-settings" {
   target_resource_id         = azurerm_application_gateway.appgw.id
   log_analytics_workspace_id = module.app-insights.azurerm_log_analytics_workspace_id
 
-  log {
+  enabled_log {
     category = "ApplicationGatewayAccessLog"
-    enabled  = true
   }
 
-  log {
+  enabled_log {
     category = "ApplicationGatewayPerformanceLog"
-    enabled  = true
   }
 
-  log {
+  enabled_log {
     category = "ApplicationGatewayFirewallLog"
-    enabled  = true
   }
 
   metric {
