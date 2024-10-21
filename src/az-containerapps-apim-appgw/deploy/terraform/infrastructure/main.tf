@@ -4,12 +4,12 @@ provider "azurerm" {
 }
 
 data "azurerm_resource_group" "imported_rg" {
-  name = "masFactura"
+  name = "internalContainerAppsTF"
 }
 
 data "azurerm_key_vault" "imported_kv" {
-  name                = "test-001-kv"
-  resource_group_name = "masFactura"
+  name                = "testingInternal-001-kv"
+  resource_group_name = "internalContainerAppsTF"
 }
 
 data "azurerm_key_vault_certificate" "vnet_internal_cert" {
@@ -34,14 +34,14 @@ data "azurerm_key_vault_secret" "vnet_internal_secret" {
 
 data "azurerm_log_analytics_workspace" "imported_law" {
   name                = "test-logs"
-  resource_group_name = "masFactura"
+  resource_group_name = "internalContainerAppsTF"
 }
 
 data "azurerm_user_assigned_identity" "imported_uai" {
   name                = "test-mi"
-  resource_group_name = "masFactura"
+  resource_group_name = "internalContainerAppsTF"
 }
-
+/*
 resource "azurerm_key_vault_access_policy" "kv-apim-access-policy" {
   key_vault_id = data.azurerm_key_vault.imported_kv.id
   tenant_id    = azurerm_api_management.api_management.identity[0].tenant_id
@@ -54,7 +54,7 @@ resource "azurerm_key_vault_access_policy" "kv-apim-access-policy" {
   certificate_permissions = [
     "Get",
   ]
-}
+}*/
 
 resource "azurerm_virtual_network" "vnet" {
   name                = "test-vnet"
@@ -320,11 +320,10 @@ resource "azurerm_container_app_environment" "container_app_environment" {
   zone_redundancy_enabled        = false
 }
 
-//esto va para la sección de App
 resource "azurerm_container_app_environment_custom_domain" "env_custom_domain" {
   container_app_environment_id = azurerm_container_app_environment.container_app_environment.id
-  certificate_blob_base64      = filebase64("../../cert/vnet-internal-cert.pfx")
-  certificate_password         = "masfactura"
+  certificate_blob_base64      = filebase64("../../bash/certs/vnet-internal-cert.pfx")
+  certificate_password         = "s5p2rm1n"
   dns_suffix                   = "vnet.internal"
 }
 
@@ -332,7 +331,7 @@ resource "azurerm_api_management" "api_management" {
   name                       = "test-002-apim"
   location                   = data.azurerm_resource_group.imported_rg.location
   resource_group_name        = data.azurerm_resource_group.imported_rg.name
-  publisher_name             = "masFactura"
+  publisher_name             = "Administrator"
   publisher_email            = "admin@masfactura.com"
   sku_name                   = "Developer_1"
   client_certificate_enabled = false
@@ -346,7 +345,7 @@ resource "azurerm_api_management" "api_management" {
     subnet_id = azurerm_subnet.apim_subnet.id
   }
 
-  certificate {
+  /*certificate {
     store_name          = "Root"
     encoded_certificate = data.azurerm_key_vault_certificate.root_cert.certificate_data_base64
   }
@@ -356,7 +355,7 @@ resource "azurerm_api_management" "api_management" {
       key_vault_id = data.azurerm_key_vault_certificate.vnet_internal_cert.versionless_secret_id
       default_ssl_binding = true
     }
-  }
+  }*/
 }
 
 resource "azurerm_private_dns_zone" "private_dns_zone" {

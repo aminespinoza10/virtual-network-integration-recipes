@@ -100,11 +100,11 @@ The first step is to create the certificate files that you'll load into Key Vaul
 ./create-certificate.sh
 ```
 
-When prompted, for the first certificate the common name (FQDN) must be **internal** and for the second prompt the common name must be ***.vnet.internal**. The result must be a new folder called **certs** and include six different files.
+**IMPORTANT**: When prompted, for the first certificate the common name (FQDN) must be **internal** and for the second prompt the common name must be ***.vnet.internal**. The result must be a new folder called **certs** and include six different files.
 
 ![Certificates](./media/certificates.png)
 
-### Step 2: Deploy the pre-requisites
+### Step 2: Deploy the pre-requisites using Bicep
 
 You can go to the folder **pre** and then run the following command for Bicep.
 
@@ -125,7 +125,7 @@ You need to repeat it with the second pfx file.
 
 ![Certificates](./media/kvCertificates2.png)
 
-### Step 3: Deploy the main infrastructure
+### Step 3: Deploy the main infrastructure using Bicep
 
 Move to the folder **infrastructure** and run one single command.
 
@@ -201,7 +201,21 @@ Weather Forecast method.
 
 ## Deploy the solution using Terraform
 
-You can go to the folder **pre** and then go to the path [terraform/pre/main.tf](./deploy/terraform/pre/main.tf) to update the passwords for the **pfx** files.
+### Step 1: Creating the certificates for the solution
+
+The first step is to create the certificate files that you'll load into Key Vault, to do that just go to the **bash** folder and execute the script.
+
+```bash
+./create-certificate.sh
+```
+
+**IMPORTANT**: When prompted, for the first certificate the common name (FQDN) must be **internal** and for the second prompt the common name must be ***.vnet.internal**. The result must be a new folder called **certs** and include six different files.
+
+![Certificates](./media/certificates.png)
+
+### Step 2: Deploy the pre-requisites for Terraform
+
+You can go to the folder **pre** and then go to the key vault certificate blocks to update the passwords for the **pfx** files.
 
 ![Certificates](./media/terraformCertificates.png)
 
@@ -218,21 +232,37 @@ terraform plan -out plan.out
 terraform apply "plan.out"
 ```
 
-No matter which way you want to go, the result of this operation will be like this image.
+### Step 3: Deploy the main infrastructure using Terraform
 
-![Certificates](./media/step1.png)
+Move to the **infrastructure** folder and open the **main.tf** file. You need to add the password for the block **azurerm_container_app_environment_custom_domain**
 
-### Step 2: Deploying the infrastructure
+![Certificates](./media/certificates2.png)
 
-In this stage we will deploy the following tools.
+You need to observe that the blocks for **azurerm_key_vault_access_policy** and **azurerm_api_management** have some commented lines.
 
-- 1 Virtual network
-- 3 Subnets
-- A network security group (NSG)
-- Api Management
-- Private DNS Zone
-- Application Gateway
+![Comments](./media/comment1.png)
 
-#### Using Terraform
+![Comments](./media/comment2.png)
 
-### Step 3: Deploying the application
+You'll need to deploy the whole infrastructure keeping this comments.
+
+```bash
+# Initialize terraform
+terraform init
+
+# Execute plan
+terraform plan -out plan.out
+
+# Apply the plan
+terraform apply "plan.out"
+```
+
+After the deployment uncomment these two blocks, you just need to run plan and apply commands, when running the plan command you'll find these changes.
+
+
+
+### Step 4: Publish the Docker images to ACR
+
+### Step 5: Deploy the Container App
+
+### Step 6: Test the public endpoint

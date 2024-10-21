@@ -31,7 +31,7 @@ cd ..
 echo "Root certificate and vnet-internal certificate created successfully"
 
 #Section 2: Create resource group in Azure
-echo "Creating pre-requisite resources in Azure"
+echo "Creating pre-requisites resources in Azure"
 echo "-----------------------------------------"
 
 RESOURCE_GROUP="internal-bicep-rg"
@@ -46,7 +46,7 @@ echo "Pre-requisite resources created successfully"
 echo "-------------------------------------------"
 
 #Section 3: Deploy the Bicep infrastructure
-echo "Creating the mainf infrastructure"
+echo "Creating the main infrastructure"
 echo "--------------------------------"
 
 az deployment group create --resource-group $RESOURCE_GROUP --template-file ../bicep/infrastructure/main.bicep
