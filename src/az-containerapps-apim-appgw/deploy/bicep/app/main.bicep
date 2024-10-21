@@ -2,7 +2,7 @@ param location string = resourceGroup().location
 param environmentName string = 'test'
 param dnsName string = 'vnet.internal'
 
-var apimName = '${environmentName}-001-apim'
+var apimName = '${environmentName}-internal-001-apim'
 var apiName = 'testing-app'
 var acrName = '${environmentName}internalapps0acr'
 
@@ -92,8 +92,8 @@ resource apimReg 'Microsoft.ApiManagement/service/apis@2022-04-01-preview' = {
     path: apiName
     protocols: ['https']
     format: 'openapi-link'
-    serviceUrl: 'http://ping-app.${hostName}'
-    value: 'http://ping-app.${hostName}/swagger/v1/swagger.json'
+    serviceUrl: 'http://${apiName}.${hostName}'
+    value: 'http://${apiName}.${hostName}/swagger/v1/swagger.json'
     subscriptionRequired: false
     isCurrent: true
   }

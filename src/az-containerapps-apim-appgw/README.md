@@ -78,16 +78,21 @@ API Management is able to expose endpoints using a custom domain rather than the
 It is important to prefix your domain with *, so the same generated domain cert may be used for all the different sub domains.
 The script creates a `.certs` folder that contains each of the `.pfx` certificates for the API Management custom domains and the `.crt` file for the root.
 
-## Deploying the architecture
+## Deploying the solution
 
-### Step 1: Deploying the prerequisites
+If you want to deploy the whole solution using Bicep go to this section.
 
-In this stage we will deploy the following tools.
+If you want to deploy the whole solution using Terraform go to this section.
 
-- Azure Container Registry
-- Azure Managed Identity
-- Key Vault
-- Log Analytics Workspace
+## Deploy the solution using Bicep
+
+Before getting started, you can go to the file [bicep-deploy.sh](./deploy/bash/bicep-deploy.sh), this file can make the whole process for you without a problem. The following guide is just a description of the steps in that script. If you want to run this script, you just need to run:
+
+```bash
+bash bicep-deploy.sh
+```
+
+### Step 1: Creating the certificates
 
 The first step is to create the certificate files that you'll load into Key Vault, to do that just go to the **bash** folder and execute the script.
 
@@ -99,9 +104,7 @@ When prompted, for the first certificate the common name (FQDN) must be **intern
 
 ![Certificates](./media/certificates.png)
 
-After this you can proceed to deploy the infrastructure with Bicep or Terraform.
-
-#### Using Bicep
+### Step 2: Deploy the pre-requisites
 
 You can go to the folder **pre** and then run the following command for Bicep.
 
@@ -114,13 +117,89 @@ az deployment group create --resource-group internalContainerApps --template-fil
 
 ```
 
-After deployment, go to the portal and upload the **pfx** files (you need to repeat it with the second pfx file).
+After deployment, go to the portal and upload the **pfx** files.
 
 ![Certificates](./media/kvCertificates.png)
 
-You are ready to go to the second step of the process now!
+You need to repeat it with the second pfx file.
 
-#### Using terraform
+![Certificates](./media/kvCertificates2.png)
+
+### Step 3: Deploy the main infrastructure
+
+Move to the folder **infrastructure** and run one single command.
+
+```bash
+# Deploy the infrastructure using Bicep
+az deployment group create --resource-group internalContainerApps --template-file main.bicep
+```
+
+That's it! The easiest step of the process right?
+
+### Step 4: Publish the Docker images to ACR
+
+With the infrastructure already deployed you can build and publish the image for the application, in this case a simple Web API, you can see the project called [WeatherForecastAPI](../common/app_code/WeatherForecastAPI/) in this repo.
+
+In order to publish the project you need to login to ACR, build the image and then publish it.
+
+```bash
+ACR_NAME="<name of the ACR instance>"
+
+az acr login --name $ACR_NAME
+docker build -t $ACR_NAME.azurecr.io/testing-app:latest ../../../common/app_code/WeatherForecastAPI
+docker push $ACR_NAME.azurecr.io/testing-app:latest
+```
+
+You can confirm this step going to the portal and verifying that the image is already in the Container Registry.
+
+![Repositories](./media/repositories.png)
+
+### Step 5: Deploy the Container App
+
+Go to **app** folder and run one single command.
+
+```bash
+# Deploy the application using Bicep
+az deployment group create --resource-group internalContainerApps --template-file main.bicep
+```
+
+After this step is time to test the solution.
+
+### Step 6: Test the public endpoint
+
+In order to test the solution you need to know the IP address of the Application gateway. There are two ways to do this fast, the first one is executing the following list of commands.
+
+```bash
+PUBLIC_IP_ID=$(az network application-gateway show --resource-group internalContainerApps --name test-appGw --query "frontendIPConfigurations[0].publicIPAddress.id" --output tsv)
+
+PUBLIC_IP=$(az network public-ip show --ids $PUBLIC_IP_ID --query "ipAddress" --output tsv)
+
+echo $PUBLIC_IP
+```
+
+Or you can easily go to the Azure portal and go to the Application Gateway
+
+![App gateway](./media/publicIP.png)
+
+Once you get the public IP address, you can start building the URL for the Web API. The structure is the following.
+
+```bash
+http://<app gateway public ip>/<container app name>/<web api method>
+```
+
+The result must present the response for both methods.
+
+Hello world method.
+
+![Response](./media/hello.png)
+
+Weather Forecast method.
+
+![Response](./media/response.png)
+
+**Note**: Because you are using Api Management you will be capable of accessing the methods but won't be able to access a Swagger interface even if it is enabled (just like the sample application).
+
+## Deploy the solution using Terraform
 
 You can go to the folder **pre** and then go to the path [terraform/pre/main.tf](./deploy/terraform/pre/main.tf) to update the passwords for the **pfx** files.
 
@@ -153,19 +232,6 @@ In this stage we will deploy the following tools.
 - Api Management
 - Private DNS Zone
 - Application Gateway
-
-#### Using Bicep
-
-Go to the **infrastructure** folder and execute the following commands:
-
-```bash
-# Deploy the resources using Bicep
-az deployment group create --resource-group internalContainerApps --template-file main.bicep
-```
-
-
-
-
 
 #### Using Terraform
 
