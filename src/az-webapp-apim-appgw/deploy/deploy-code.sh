@@ -40,7 +40,7 @@ cd ../../common/app_code/WeatherForecastAPI/ || exit
 dotnet publish --configuration Release
 
 # zip code
-cd ./bin/Release/netcoreapp3.1/publish || exit
+cd ./bin/Release/net8.0/publish || exit
 zip -r code.zip .
 
 # Copy the zipped file to the WeatherForecastAPI folder.
