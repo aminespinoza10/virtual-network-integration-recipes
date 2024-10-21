@@ -320,13 +320,6 @@ resource "azurerm_container_app_environment" "container_app_environment" {
   zone_redundancy_enabled        = false
 }
 
-resource "azurerm_container_app_environment_custom_domain" "env_custom_domain" {
-  container_app_environment_id = azurerm_container_app_environment.container_app_environment.id
-  certificate_blob_base64      = filebase64("../../bash/certs/vnet-internal-cert.pfx")
-  certificate_password         = "s5p2rm1n"
-  dns_suffix                   = "vnet.internal"
-}
-
 resource "azurerm_api_management" "api_management" {
   name                       = "test-002-apim"
   location                   = data.azurerm_resource_group.imported_rg.location
@@ -344,8 +337,8 @@ resource "azurerm_api_management" "api_management" {
   virtual_network_configuration {
     subnet_id = azurerm_subnet.apim_subnet.id
   }
-
-  /*certificate {
+/*
+  certificate {
     store_name          = "Root"
     encoded_certificate = data.azurerm_key_vault_certificate.root_cert.certificate_data_base64
   }

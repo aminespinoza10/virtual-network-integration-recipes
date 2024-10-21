@@ -138,7 +138,7 @@ That's it! The easiest step of the process right?
 
 ### Step 4: Publish the Docker images to ACR
 
-With the infrastructure already deployed you can build and publish the image for the application, in this case a simple Web API, you can see the project called [WeatherForecastAPI](../common/app_code/WeatherForecastAPI/) in this repo.
+With the infrastructure already deployed you can build and publish the image for the application, in this case a simple Web API. You can see the project called [WeatherForecastAPI](../common/app_code/WeatherForecastAPI/) in this repo.
 
 In order to publish the project you need to login to ACR, build the image and then publish it.
 
@@ -234,15 +234,7 @@ terraform apply "plan.out"
 
 ### Step 3: Deploy the main infrastructure using Terraform
 
-Move to the **infrastructure** folder and open the **main.tf** file. You need to add the password for the block **azurerm_container_app_environment_custom_domain**
-
-![Certificates](./media/certificates2.png)
-
-You need to observe that the blocks for **azurerm_key_vault_access_policy** and **azurerm_api_management** have some commented lines.
-
-![Comments](./media/comment1.png)
-
-![Comments](./media/comment2.png)
+Go to the **infrastructure** folder and you can to observe that the blocks for **azurerm_key_vault_access_policy** and **azurerm_api_management** have some commented lines.
 
 You'll need to deploy the whole infrastructure keeping this comments.
 
@@ -257,12 +249,49 @@ terraform plan -out plan.out
 terraform apply "plan.out"
 ```
 
-After the deployment uncomment these two blocks, you just need to run plan and apply commands, when running the plan command you'll find these changes.
+After the deployment uncomment first the access policy block, you just need to run plan and apply commands.
 
+![Comments](./media/comment1.png)
 
+After a succesful execution you can uncomment API management instance lines and run the script again.
 
-### Step 4: Publish the Docker images to ACR
+![Comments](./media/comment2.png)
+
+### Step 4: Publish the Docker images to Azure Container Registry
+
+With the infrastructure already deployed you can build and publish the image for the application, in this case a simple Web API. You can see the project called [WeatherForecastAPI](../common/app_code/WeatherForecastAPI/) in this repo.
+
+In order to publish the project you need to login to ACR, build the image and then publish it.
+
+```bash
+ACR_NAME="<name of the ACR instance>"
+
+az acr login --name $ACR_NAME
+docker build -t $ACR_NAME.azurecr.io/testing-app:latest ../../../common/app_code/WeatherForecastAPI
+docker push $ACR_NAME.azurecr.io/testing-app:latest
+```
+
+You can confirm this step going to the portal and verifying that the image is already in the Container Registry.
+
+![Repositories](./media/repositories.png)
 
 ### Step 5: Deploy the Container App
+
+Move to the **app** folder and open the **main.tf** file. You need to add the password for the block **azurerm_container_app_environment_custom_domain**
+
+![Certificates](./media/certificates2.png)
+
+After that update you can deploy the infrastructure.
+
+```bash
+# Initialize terraform
+terraform init
+
+# Execute plan
+terraform plan -out plan.out
+
+# Apply the plan
+terraform apply "plan.out"
+```
 
 ### Step 6: Test the public endpoint

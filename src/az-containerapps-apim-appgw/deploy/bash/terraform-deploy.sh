@@ -58,7 +58,25 @@ terraform plan -out=plan.out
 terraform apply plan.out
 
 #Section 4: Publish the container images to ACR
+echo "Publishing the container images to ACR"
+echo "--------------------------------------"
+
+ACR_NAME="internalcontainerappsacr"
+
+az acr login --name $ACR_NAME
+docker build -t $ACR_NAME.azurecr.io/testing-app:latest ../../../common/app_code/WeatherForecastAPI
+docker push $ACR_NAME.azurecr.io/testing-app:latest
 
 #Section 5: Deploy the container apps
+echo "Deploying the container apps"
+echo "----------------------------"
+
+cd ../terraform/app
+
+terraform init 
+
+terraform plan -out=plan.out
+
+terraform apply plan.out
 
 #Section 6: Test the public endpoint

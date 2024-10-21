@@ -4,33 +4,53 @@ provider "azurerm" {
 }
 
 data "azurerm_resource_group" "imported_rg" {
-  name = "masFactura"
+  name = "internalContainerAppsTF"
 }
 
 data "azurerm_container_app_environment" "container_app_environment" {
   name = "test-env"
-  resource_group_name = "masFactura"
+  resource_group_name = "internalContainerAppsTF"
 }
 
 data "azurerm_private_dns_zone" "private_dns_zone" {
   name                = "vnet.internal"
-  resource_group_name = "masFactura"
+  resource_group_name = "internalContainerAppsTF"
 }
 
 data "azurerm_api_management" "apim" {
   name                = "test-002-apim"
-  resource_group_name = "masFactura" 
+  resource_group_name = "internalContainerAppsTF" 
+}
+
+data "azurerm_container_registry" "acr" {
+  name                = "internalcontainerappsacr"
+  resource_group_name = "internalContainerAppsTF"
+}
+
+resource "azurerm_user_assigned_identity" "containerapp" {
+  location            = data.azurerm_resource_group.imported_rg.location
+  name                = "containerappmi"
+  resource_group_name = data.azurerm_resource_group.imported_rg.name
+}
+ 
+resource "azurerm_role_assignment" "containerapp" {
+  scope                = data.azurerm_container_registry.acr.id
+  role_definition_name = "acrpull"
+  principal_id         = azurerm_user_assigned_identity.containerapp.principal_id
+  depends_on = [
+    azurerm_user_assigned_identity.containerapp
+  ]
 }
 
 resource "azurerm_container_app_environment_custom_domain" "env_custom_domain" {
   container_app_environment_id = data.azurerm_container_app_environment.container_app_environment.id
-  certificate_blob_base64      = filebase64("../../cert/vnet-internal-cert.pfx")
-  certificate_password         = "masfactura"
+  certificate_blob_base64      = filebase64("../../bash/certs/vnet-internal-cert.pfx")
+  certificate_password         = "s5p2rm1n"
   dns_suffix                   = "vnet.internal"
 }
 
 resource "azurerm_container_app" "minimal_Api" {
-  name = "masfactura-api"
+  name = "testing-app"
   resource_group_name = data.azurerm_resource_group.imported_rg.name
   container_app_environment_id = data.azurerm_container_app_environment.container_app_environment.id
   ingress {
@@ -43,13 +63,18 @@ resource "azurerm_container_app" "minimal_Api" {
   }
   template {
     container {
-      name = "masfactura-api"
-      image = "docker.io/aminespinoza/minimalapi:latest"
-      cpu = 0.25
+      name   = "testing-app"
+      image  = "${data.azurerm_container_registry.acr.login_server}/testing-app:latest"
+      cpu    = 0.25
       memory = "0.5Gi"
     }
   }
   revision_mode = "Single"
+
+  registry {
+    server   = data.azurerm_container_registry.acr.login_server
+    identity = azurerm_user_assigned_identity.containerapp.principal_id
+  }
 }
 
 resource "azurerm_private_dns_a_record" "a_record" {
@@ -61,18 +86,18 @@ resource "azurerm_private_dns_a_record" "a_record" {
 }
 
 resource "azurerm_api_management_api" "apim_api_registration" {
-  name = "masfactura-api"
+  name = "testing-app"
   resource_group_name = data.azurerm_resource_group.imported_rg.name
   api_management_name = data.azurerm_api_management.apim.name
-  display_name = "masfactura-api"
+  display_name = "testing-app"
   revision            = "1"
   api_type = "http"
-  path = "masfactura-api"
+  path = "testing-app"
   protocols = ["https"]
-  service_url = "http://masfactura-api.${azurerm_container_app_environment_custom_domain.env_custom_domain.dns_suffix}"
+  service_url = "http://testing-app.${azurerm_container_app_environment_custom_domain.env_custom_domain.dns_suffix}"
   import {
     content_format = "openapi-link"
-    content_value = "http://masfactura-api.${azurerm_container_app_environment_custom_domain.env_custom_domain.dns_suffix}/swagger/v1/swagger.json"
+    content_value = "http://testing-app.${azurerm_container_app_environment_custom_domain.env_custom_domain.dns_suffix}/swagger/v1/swagger.json"
   }
   subscription_required = false
 }

@@ -109,7 +109,7 @@ resource "azurerm_key_vault_certificate" "root_certificate" {
   key_vault_id = azurerm_key_vault.key_vault.id
   certificate {
     contents = filebase64("../../bash/certs/root-cert.pfx")
-    password = "<certifcate-password>"
+    password = "s5p2rm1n"
   }
 
   depends_on = [ azurerm_key_vault_access_policy.owner_access_policy ]
@@ -120,7 +120,7 @@ resource "azurerm_key_vault_certificate" "vnet_internal_certificate" {
   key_vault_id = azurerm_key_vault.key_vault.id
   certificate {
     contents = filebase64("../../bash/certs/vnet-internal-cert.pfx")
-    password = "<certifcate-password>"
+    password = "s5p2rm1n"
   }
 
   depends_on = [ azurerm_key_vault_access_policy.owner_access_policy ]
