@@ -41,7 +41,7 @@ data "azurerm_user_assigned_identity" "imported_uai" {
   name                = "test-mi"
   resource_group_name = "internalContainerAppsTF"
 }
-/*
+
 resource "azurerm_key_vault_access_policy" "kv-apim-access-policy" {
   key_vault_id = data.azurerm_key_vault.imported_kv.id
   tenant_id    = azurerm_api_management.api_management.identity[0].tenant_id
@@ -54,7 +54,9 @@ resource "azurerm_key_vault_access_policy" "kv-apim-access-policy" {
   certificate_permissions = [
     "Get",
   ]
-}*/
+
+  depends_on = [ azurerm_api_management.api_management ]
+}
 
 resource "azurerm_virtual_network" "vnet" {
   name                = "test-vnet"
@@ -96,7 +98,7 @@ resource "azurerm_subnet" "api_subnet" {
   delegation {
     name = "appsvc-delegation"
     service_delegation {
-      name    = "Microsoft.App/environments"
+      name = "Microsoft.App/environments"
     }
   }
 }
@@ -318,10 +320,18 @@ resource "azurerm_container_app_environment" "container_app_environment" {
   internal_load_balancer_enabled = true
   infrastructure_subnet_id       = azurerm_subnet.api_subnet.id
   zone_redundancy_enabled        = false
+  infrastructure_resource_group_name = "ME_test-env_internalContainerAppsTF_eastus2"
+}
+
+resource "azurerm_container_app_environment_custom_domain" "env_custom_domain" {
+  container_app_environment_id = azurerm_container_app_environment.container_app_environment.id
+  certificate_blob_base64      = filebase64("../../bash/certs/vnet-internal-cert.pfx")
+  certificate_password         = "s5p2rm1n"
+  dns_suffix                   = "vnet.internal"
 }
 
 resource "azurerm_api_management" "api_management" {
-  name                       = "test-002-apim"
+  name                       = "test-007-apim"
   location                   = data.azurerm_resource_group.imported_rg.location
   resource_group_name        = data.azurerm_resource_group.imported_rg.name
   publisher_name             = "Administrator"
@@ -331,13 +341,13 @@ resource "azurerm_api_management" "api_management" {
   virtual_network_type       = "Internal"
 
   identity {
-    type         = "SystemAssigned"
+    type = "SystemAssigned"
   }
 
   virtual_network_configuration {
     subnet_id = azurerm_subnet.apim_subnet.id
   }
-/*
+
   certificate {
     store_name          = "Root"
     encoded_certificate = data.azurerm_key_vault_certificate.root_cert.certificate_data_base64
@@ -348,7 +358,7 @@ resource "azurerm_api_management" "api_management" {
       key_vault_id = data.azurerm_key_vault_certificate.vnet_internal_cert.versionless_secret_id
       default_ssl_binding = true
     }
-  }*/
+  }
 }
 
 resource "azurerm_private_dns_zone" "private_dns_zone" {
@@ -380,121 +390,121 @@ resource "azurerm_public_ip" "gateway_ip" {
   allocation_method   = "Static"
 }
 
-resource "azurerm_application_gateway" "network" {
-    name                = "test-appgw"
-    location            = data.azurerm_resource_group.imported_rg.location
-    resource_group_name = data.azurerm_resource_group.imported_rg.name
+resource "azurerm_application_gateway" "app_gateway" {
+  name                = "test-appgw"
+  location            = data.azurerm_resource_group.imported_rg.location
+  resource_group_name = data.azurerm_resource_group.imported_rg.name
 
-    identity {
-      type         = "UserAssigned"
-      identity_ids = [data.azurerm_user_assigned_identity.imported_uai.id]
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [data.azurerm_user_assigned_identity.imported_uai.id]
+  }
+
+  sku {
+    name     = "WAF_v2"
+    tier     = "WAF_v2"
+    capacity = 2
+  }
+
+  enable_http2 = true
+
+  waf_configuration {
+    enabled            = true
+    firewall_mode      = "Detection"
+    rule_set_type      = "OWASP"
+    rule_set_version   = "3.1"
+    request_body_check = false
+    disabled_rule_group {
+      rule_group_name = "REQUEST-920-PROTOCOL-ENFORCEMENT"
+      rules           = ["920320"]
     }
+  }
 
-    sku {
-        name           = "WAF_v2"
-        tier           = "WAF_v2"
-        capacity       = 2
+  trusted_root_certificate {
+    name                = "root_cert_internaldomain"
+    key_vault_secret_id = data.azurerm_key_vault_secret.root_secret.id
+  }
+
+  probe {
+    name                                      = "apimgw-probe"
+    pick_host_name_from_backend_http_settings = true
+    timeout                                   = 30
+    interval                                  = 30
+    unhealthy_threshold                       = 3
+    path                                      = "/status-0123456789abcdef"
+    protocol                                  = "Https"
+    match {
+      status_code = ["200", "399"]
     }
+  }
 
-    enable_http2 = true
+  gateway_ip_configuration {
+    name      = "appgw-ip-config"
+    subnet_id = azurerm_subnet.appgw_subnet.id
+  }
 
-    waf_configuration {
-      enabled          = true
-      firewall_mode    = "Detection"
-      rule_set_type    = "OWASP"
-      rule_set_version = "3.1"
-      request_body_check = false
-      disabled_rule_group {
-        rule_group_name = "REQUEST-920-PROTOCOL-ENFORCEMENT"
-        rules           = ["920320"]
+  frontend_ip_configuration {
+    name                 = "appgw-public-frontend-ip"
+    public_ip_address_id = azurerm_public_ip.gateway_ip.id
+  }
+
+  frontend_port {
+    name = "port_80"
+    port = 80
+  }
+
+  backend_address_pool {
+    name  = "backend-apigw"
+    fqdns = ["apim.vnet.internal"]
+  }
+
+  backend_http_settings {
+    name                  = "apim_gw_httpssettings"
+    cookie_based_affinity = "Disabled"
+    port                  = 443
+    protocol              = "Https"
+    request_timeout       = 120
+    connection_draining {
+      enabled           = true
+      drain_timeout_sec = 20
+    }
+    pick_host_name_from_backend_address = true
+    trusted_root_certificate_names      = ["root_cert_internaldomain"]
+    probe_name                          = "apimgw-probe"
+  }
+
+  http_listener {
+    name                           = "apigw-http-listener"
+    frontend_ip_configuration_name = "appgw-public-frontend-ip"
+    frontend_port_name             = "port_80"
+    protocol                       = "Http"
+  }
+
+  ssl_policy {
+    policy_type = "Predefined"
+    policy_name = "AppGwSslPolicy20170401S"
+  }
+
+  request_routing_rule {
+    name                       = "routing-apigw"
+    rule_type                  = "Basic"
+    http_listener_name         = "apigw-http-listener"
+    backend_address_pool_name  = "backend-apigw"
+    backend_http_settings_name = "apim_gw_httpssettings"
+    priority                   = 1
+    rewrite_rule_set_name      = "default-rewrite-rules"
+  }
+
+  rewrite_rule_set {
+    name = "default-rewrite-rules"
+    rewrite_rule {
+      rule_sequence = 1000
+      name          = "HSTS header injection"
+      response_header_configuration {
+        header_name  = "Strict-Transport-Security"
+        header_value = "max-age=31536000; includeSubDomains"
       }
     }
-
-    trusted_root_certificate {
-      name                = "root_cert_internaldomain"
-      key_vault_secret_id = data.azurerm_key_vault_secret.root_secret.id
-    }
-
-    probe {
-      name                                      = "apimgw-probe"
-      pick_host_name_from_backend_http_settings = true
-      timeout                                   = 30
-      interval                                  = 30
-      unhealthy_threshold                       = 3
-      path                                      = "/status-0123456789abcdef"
-      protocol                                  = "Https"
-      match {
-        status_code = ["200", "399"]
-      }
-    }
-
-    gateway_ip_configuration {
-      name      = "appgw-ip-config"
-      subnet_id = azurerm_subnet.appgw_subnet.id
-    }
-
-    frontend_ip_configuration {
-      name                 = "appgw-public-frontend-ip"
-      public_ip_address_id = azurerm_public_ip.gateway_ip.id
-    }
-
-    frontend_port {
-      name         = "port_80"
-      port         = 80
-    }
-
-    backend_address_pool {
-      name = "backend-apigw" 
-      fqdns = ["apim.vnet.internal"]
-    }
-
-    backend_http_settings {
-      name                  = "apim_gw_httpssettings"
-      cookie_based_affinity = "Disabled"
-      port                  = 443
-      protocol              = "Https"
-      request_timeout        = 120
-      connection_draining {
-        enabled           = true
-        drain_timeout_sec = 20
-      }
-      pick_host_name_from_backend_address = true
-      trusted_root_certificate_names = [ "root_cert_internaldomain" ]
-      probe_name = "apimgw-probe"
-    }
-
-    http_listener {
-      name                           = "apigw-http-listener"
-      frontend_ip_configuration_name = "appgw-public-frontend-ip"
-      frontend_port_name             = "port_80"
-      protocol                       = "Http"
-    }
-
-    ssl_policy {
-      policy_type = "Predefined"
-      policy_name = "AppGwSslPolicy20170401S"
-    }
-
-    request_routing_rule {
-      name                       = "routing-apigw"
-      rule_type                  = "Basic"
-      http_listener_name         = "apigw-http-listener"
-      backend_address_pool_name  = "backend-apigw"
-      backend_http_settings_name = "apim_gw_httpssettings"
-      priority                   = 1
-      rewrite_rule_set_name    = "default-rewrite-rules"
-    }
-
-    rewrite_rule_set {
-      name = "default-rewrite-rules"
-      rewrite_rule {
-        rule_sequence = 1000
-        name          = "HSTS header injection"
-        response_header_configuration {
-          header_name  = "Strict-Transport-Security"
-          header_value = "max-age=31536000; includeSubDomains"
-        }
-      }
-    }
+  }
 }
 

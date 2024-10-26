@@ -8,7 +8,7 @@ data "azurerm_resource_group" "imported_rg" {
 }
 
 data "azurerm_container_app_environment" "container_app_environment" {
-  name = "test-env"
+  name                = "test-env"
   resource_group_name = "internalContainerAppsTF"
 }
 
@@ -18,8 +18,8 @@ data "azurerm_private_dns_zone" "private_dns_zone" {
 }
 
 data "azurerm_api_management" "apim" {
-  name                = "test-002-apim"
-  resource_group_name = "internalContainerAppsTF" 
+  name                = "test-007-apim"
+  resource_group_name = "internalContainerAppsTF"
 }
 
 data "azurerm_container_registry" "acr" {
@@ -27,43 +27,43 @@ data "azurerm_container_registry" "acr" {
   resource_group_name = "internalContainerAppsTF"
 }
 
-resource "azurerm_user_assigned_identity" "containerapp" {
+resource "azurerm_user_assigned_identity" "containerapp_identity" {
   location            = data.azurerm_resource_group.imported_rg.location
-  name                = "containerappmi"
+  name                = "containerapp_identity"
   resource_group_name = data.azurerm_resource_group.imported_rg.name
 }
- 
+
 resource "azurerm_role_assignment" "containerapp" {
   scope                = data.azurerm_container_registry.acr.id
   role_definition_name = "acrpull"
-  principal_id         = azurerm_user_assigned_identity.containerapp.principal_id
+  principal_id         = azurerm_user_assigned_identity.containerapp_identity.principal_id
   depends_on = [
-    azurerm_user_assigned_identity.containerapp
+    azurerm_user_assigned_identity.containerapp_identity
   ]
 }
 
-resource "azurerm_container_app_environment_custom_domain" "env_custom_domain" {
-  container_app_environment_id = data.azurerm_container_app_environment.container_app_environment.id
-  certificate_blob_base64      = filebase64("../../bash/certs/vnet-internal-cert.pfx")
-  certificate_password         = "s5p2rm1n"
-  dns_suffix                   = "vnet.internal"
-}
-
 resource "azurerm_container_app" "minimal_Api" {
-  name = "testing-app"
-  resource_group_name = data.azurerm_resource_group.imported_rg.name
+  name                         = "testing-api"
+  resource_group_name          = data.azurerm_resource_group.imported_rg.name
   container_app_environment_id = data.azurerm_container_app_environment.container_app_environment.id
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.containerapp_identity.id]
+  }
+
   ingress {
     external_enabled = true
-    target_port = 8080
+    target_port      = 8080
     traffic_weight {
       latest_revision = true
-      percentage = 100
+      percentage      = 100
     }
   }
+
   template {
     container {
-      name   = "testing-app"
+      name   = "testing-api"
       image  = "${data.azurerm_container_registry.acr.login_server}/testing-app:latest"
       cpu    = 0.25
       memory = "0.5Gi"
@@ -73,12 +73,12 @@ resource "azurerm_container_app" "minimal_Api" {
 
   registry {
     server   = data.azurerm_container_registry.acr.login_server
-    identity = azurerm_user_assigned_identity.containerapp.principal_id
+    identity = azurerm_user_assigned_identity.containerapp_identity.id
   }
 }
 
 resource "azurerm_private_dns_a_record" "a_record" {
-  name                = "masfactura-api"
+  name                = "testing-api"
   zone_name           = data.azurerm_private_dns_zone.private_dns_zone.name
   resource_group_name = data.azurerm_resource_group.imported_rg.name
   ttl                 = 60
@@ -86,24 +86,24 @@ resource "azurerm_private_dns_a_record" "a_record" {
 }
 
 resource "azurerm_api_management_api" "apim_api_registration" {
-  name = "testing-app"
+  name = "testing-api"
   resource_group_name = data.azurerm_resource_group.imported_rg.name
   api_management_name = data.azurerm_api_management.apim.name
-  display_name = "testing-app"
+  display_name = "testing-api"
   revision            = "1"
   api_type = "http"
-  path = "testing-app"
+  path = "testing-api"
   protocols = ["https"]
-  service_url = "http://testing-app.${azurerm_container_app_environment_custom_domain.env_custom_domain.dns_suffix}"
+  service_url = "http://testing-api.vnet.internal"
   import {
     content_format = "openapi-link"
-    content_value = "http://testing-app.${azurerm_container_app_environment_custom_domain.env_custom_domain.dns_suffix}/swagger/v1/swagger.json"
+    content_value = "http://testing-api.vnet.internal/swagger/v1/swagger.json"
   }
   subscription_required = false
 }
 
 resource "azurerm_api_management_api_policy" "apim_api_policy" {
-  api_name = azurerm_api_management_api.apim_api_registration.name
+  api_name            = azurerm_api_management_api.apim_api_registration.name
   api_management_name = data.azurerm_api_management.apim.name
   resource_group_name = data.azurerm_resource_group.imported_rg.name
 

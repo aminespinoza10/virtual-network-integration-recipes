@@ -41,53 +41,53 @@ resource "azurerm_key_vault" "key_vault" {
 
 resource "azurerm_key_vault_access_policy" "owner_access_policy" {
   key_vault_id = azurerm_key_vault.key_vault.id
-  tenant_id = data.azurerm_client_config.current.tenant_id
-  object_id = data.azurerm_client_config.current.object_id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = data.azurerm_client_config.current.object_id
 
   certificate_permissions = [
-      "Create",
-      "Delete",
-      "DeleteIssuers",
-      "Get",
-      "GetIssuers",
-      "Import",
-      "List",
-      "ListIssuers",
-      "ManageContacts",
-      "ManageIssuers",
-      "SetIssuers",
-      "Update",
-      "Purge"
-    ]
+    "Create",
+    "Delete",
+    "DeleteIssuers",
+    "Get",
+    "GetIssuers",
+    "Import",
+    "List",
+    "ListIssuers",
+    "ManageContacts",
+    "ManageIssuers",
+    "SetIssuers",
+    "Update",
+    "Purge"
+  ]
   key_permissions = [
-      "Backup",
-      "Create",
-      "Decrypt",
-      "Delete",
-      "Encrypt",
-      "Get",
-      "Import",
-      "List",
-      "Purge",
-      "Recover",
-      "Restore",
-      "Sign",
-      "UnwrapKey",
-      "Update",
-      "Verify",
-      "WrapKey",
-    ]
+    "Backup",
+    "Create",
+    "Decrypt",
+    "Delete",
+    "Encrypt",
+    "Get",
+    "Import",
+    "List",
+    "Purge",
+    "Recover",
+    "Restore",
+    "Sign",
+    "UnwrapKey",
+    "Update",
+    "Verify",
+    "WrapKey",
+  ]
 
-    secret_permissions = [
-      "Backup",
-      "Delete",
-      "Get",
-      "List",
-      "Purge",
-      "Recover",
-      "Restore",
-      "Set",
-    ]
+  secret_permissions = [
+    "Backup",
+    "Delete",
+    "Get",
+    "List",
+    "Purge",
+    "Recover",
+    "Restore",
+    "Set",
+  ]
 }
 
 resource "azurerm_key_vault_access_policy" "kv-appgw-access-policy" {
@@ -112,7 +112,7 @@ resource "azurerm_key_vault_certificate" "root_certificate" {
     password = "s5p2rm1n"
   }
 
-  depends_on = [ azurerm_key_vault_access_policy.owner_access_policy ]
+  depends_on = [azurerm_key_vault_access_policy.owner_access_policy]
 }
 
 resource "azurerm_key_vault_certificate" "vnet_internal_certificate" {
@@ -123,7 +123,7 @@ resource "azurerm_key_vault_certificate" "vnet_internal_certificate" {
     password = "s5p2rm1n"
   }
 
-  depends_on = [ azurerm_key_vault_access_policy.owner_access_policy ]
+  depends_on = [azurerm_key_vault_access_policy.owner_access_policy]
 }
 
 resource "azurerm_log_analytics_workspace" "example" {

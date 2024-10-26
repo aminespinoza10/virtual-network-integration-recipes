@@ -234,7 +234,7 @@ terraform apply "plan.out"
 
 ### Step 3: Deploy the main infrastructure using Terraform
 
-Go to the **infrastructure** folder and you can to observe that the blocks for **azurerm_key_vault_access_policy** and **azurerm_api_management** have some commented lines.
+Go to the **infrastructure** folder and you can to observe that the block for **azurerm_api_management** have some commented lines.
 
 You'll need to deploy the whole infrastructure keeping this comments.
 
@@ -248,10 +248,6 @@ terraform plan -out plan.out
 # Apply the plan
 terraform apply "plan.out"
 ```
-
-After the deployment uncomment first the access policy block, you just need to run plan and apply commands.
-
-![Comments](./media/comment1.png)
 
 After a succesful execution you can uncomment API management instance lines and run the script again.
 
@@ -294,4 +290,34 @@ terraform plan -out plan.out
 terraform apply "plan.out"
 ```
 
+After this step is time to test the solution.
+
 ### Step 6: Test the public endpoint
+
+In order to test the solution you need to know the IP address of the Application gateway. There are two ways to do this fast, the first one is executing the following list of commands.
+
+```bash
+PUBLIC_IP_ID=$(az network application-gateway show --resource-group internalContainerApps --name test-appGw --query "frontendIPConfigurations[0].publicIPAddress.id" --output tsv)
+
+PUBLIC_IP=$(az network public-ip show --ids $PUBLIC_IP_ID --query "ipAddress" --output tsv)
+
+echo $PUBLIC_IP
+```
+
+Or you can easily go to the Azure portal and go to the Application Gateway.
+
+![Repositories](./media/appGateway.png)
+
+The result must present the response for any available method.
+
+Hello world method.
+
+![Response](./media/response2.png)
+
+## Considerations
+
+If you need or just want to access the API in internal mode then the best recommendation is to create a virtual machine and a new instance of Bastion (any of them are included in this scenario).
+
+If you do so then you can access the swagger url of the API.
+
+![Response](./media/swagger.png)
