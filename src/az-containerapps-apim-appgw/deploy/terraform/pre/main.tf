@@ -1,6 +1,6 @@
 provider "azurerm" {
   features {}
-  subscription_id = "30a83aff-7a8b-4ca3-aa48-ab93268b5a8b"
+  subscription_id = "<subscription id>"
 }
 
 data "azurerm_client_config" "current" {}
@@ -109,7 +109,7 @@ resource "azurerm_key_vault_certificate" "root_certificate" {
   key_vault_id = azurerm_key_vault.key_vault.id
   certificate {
     contents = filebase64("../../bash/certs/root-cert.pfx")
-    password = "s5p2rm1n"
+    password = "<certificate password>"
   }
 
   depends_on = [azurerm_key_vault_access_policy.owner_access_policy]
@@ -120,7 +120,7 @@ resource "azurerm_key_vault_certificate" "vnet_internal_certificate" {
   key_vault_id = azurerm_key_vault.key_vault.id
   certificate {
     contents = filebase64("../../bash/certs/vnet-internal-cert.pfx")
-    password = "s5p2rm1n"
+    password = "<certificate password>"
   }
 
   depends_on = [azurerm_key_vault_access_policy.owner_access_policy]

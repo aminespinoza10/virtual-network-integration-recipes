@@ -1,6 +1,6 @@
 provider "azurerm" {
   features {}
-  subscription_id = "30a83aff-7a8b-4ca3-aa48-ab93268b5a8b"
+  subscription_id = "<subscription id>"
 }
 
 data "azurerm_resource_group" "imported_rg" {
@@ -320,13 +320,12 @@ resource "azurerm_container_app_environment" "container_app_environment" {
   internal_load_balancer_enabled = true
   infrastructure_subnet_id       = azurerm_subnet.api_subnet.id
   zone_redundancy_enabled        = false
-  infrastructure_resource_group_name = "ME_test-env_internalContainerAppsTF_eastus2"
 }
 
 resource "azurerm_container_app_environment_custom_domain" "env_custom_domain" {
   container_app_environment_id = azurerm_container_app_environment.container_app_environment.id
   certificate_blob_base64      = filebase64("../../bash/certs/vnet-internal-cert.pfx")
-  certificate_password         = "s5p2rm1n"
+  certificate_password         = "<certificate password>"
   dns_suffix                   = "vnet.internal"
 }
 
@@ -335,7 +334,7 @@ resource "azurerm_api_management" "api_management" {
   location                   = data.azurerm_resource_group.imported_rg.location
   resource_group_name        = data.azurerm_resource_group.imported_rg.name
   publisher_name             = "Administrator"
-  publisher_email            = "admin@masfactura.com"
+  publisher_email            = "admin@contoso.com"
   sku_name                   = "Developer_1"
   client_certificate_enabled = false
   virtual_network_type       = "Internal"

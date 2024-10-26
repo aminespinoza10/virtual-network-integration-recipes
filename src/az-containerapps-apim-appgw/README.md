@@ -316,8 +316,10 @@ Hello world method.
 
 ## Considerations
 
-If you need or just want to access the API in internal mode then the best recommendation is to create a virtual machine and a new instance of Bastion (any of them are included in this scenario).
+- If you need or just want to access the API in internal mode then the best recommendation is to create a virtual machine and a new instance of Bastion (any of them are included in this scenario).
 
 If you do so then you can access the swagger url of the API.
 
 ![Response](./media/swagger.png)
+
+- Both, Bicep and Terraform files are using the most basic structures in order to make them more readable and easy to understand. We are not using modules, variables or remote backend for a production environment it is strongly recommended to adapt the best practices.
