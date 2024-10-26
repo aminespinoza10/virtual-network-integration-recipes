@@ -17,9 +17,7 @@ var summaries = new[]
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
-app.MapGet("/hello", () => "Hello World!")
-.WithName("GetHello")
-.WithOpenApi();
+app.MapGet("/hello", () => "Hello World!");
 
 app.MapGet("/weatherforecast", () =>
 {
@@ -32,9 +30,7 @@ app.MapGet("/weatherforecast", () =>
         ))
         .ToArray();
     return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+});
 
 app.Run();
 
