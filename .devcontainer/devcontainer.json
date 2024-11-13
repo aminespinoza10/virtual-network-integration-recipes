@@ -29,7 +29,8 @@
         },
         "ghcr.io/devcontainers/features/github-cli:1": {
             "version": "2.17.0"
-        }
+        },
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
     },
     "customizations": {
         "vscode": {
