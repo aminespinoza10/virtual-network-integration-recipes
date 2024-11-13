@@ -22,7 +22,7 @@ variable "is_linux" {
 variable "linux_fx_version" {
   type        = string
   description = "Linux App Framework and version for the App Service."
-  default     = "DOTNETCORE|3.1"
+  default     = "DOTNETCORE|8.0"
 }
 
 variable "azurerm_service_plan_name" {

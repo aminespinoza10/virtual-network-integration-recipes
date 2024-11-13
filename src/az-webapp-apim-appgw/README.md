@@ -56,7 +56,7 @@ The following sections provide details on pre-requisites to use the recipe, alon
 The following pre-requisites should be in place in order to successfully use this recipe:
 
 - [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)
-- [.NET Core 3.1](https://docs.microsoft.com/dotnet/core/install/)
+- [.NET 8.0](https://docs.microsoft.com/dotnet/core/install/)
 
 ### Deployment
 
@@ -175,7 +175,7 @@ The snippet above reads the certificate contents from the previously generated f
 
 Using Private Endpoints to secure Azure Web Apps not only ensures that the web app is publicly inaccessible, but also blocks requests to Azure Web App's SCM endpoint, used for deployment of application code. As a result, publishing code from a local machine via the SCM endpoint is not possible as the endpoint is restricted for use from within the virtual network. The following approaches can be taken in order to deploy code to the application:
 
-- Use GitHub to push code to a new repository, then connect to the VM jumpbox provisioned by Terraform or Bicep using Bastion, clone the project and deploy using `az webapp deploy`. The VM does not have any of pre-requisite dev tools installed automatically, so installing the necessary packages (Azure CLI, .NET Core, etc.) on the machine is required before publishing.
+- Use GitHub to push code to a new repository, then connect to the VM jumpbox provisioned by Terraform or Bicep using Bastion, clone the project and deploy using `az webapp deploy`. The VM does not have any of pre-requisite dev tools installed automatically, so installing the necessary packages (Azure CLI, .NET, etc.) on the machine is required before publishing.
 - Before using the recipe, deploy a virtual network with agents that contain the project code, then utilize those (self-hosted) agents in a pipeline that allows for automated deployment of code to the Azure Web App.
 - Connect the local machine to the virtual network using Point-to-Site, then publish normally from the local machine using `az webapp deploy` ([Microsoft Docs](https://docs.microsoft.com/azure/vpn-gateway/point-to-site-about)).
 - Deploy using the "Run from package" approach, using an Azure Storage blob and the web application's managed identity, as noted [here](https://docs.microsoft.com/azure/app-service/deploy-run-package#fetch-a-package-from-azure-blob-storage-using-a-managed-identity). The [deploy-code.sh](./deploy/deploy-code.sh) script provides an example on how this can be accomplished. Run the script, providing the necessary arguments for the existing Azure Web App and the Azure Storage account that will be created in the process.

@@ -49,7 +49,7 @@ Please view the [Contributing](./CONTRIBUTING.md) guidance for more information 
 
 - Install [Visual Studio Code](https://code.visualstudio.com/).
 - [Docker](https://www.docker.com/products/docker-desktop) (optional - for use with Visual Studio Code dev container)
-- .NET Core 3.1
+- .NET 8.0
 - Python 3.8
 - Node 14
 - [Azure Functions Core Tools v3](https://learn.microsoft.com/azure/azure-functions/functions-run-local)
@@ -82,7 +82,7 @@ The dev container included with this project includes the following configuratio
   - Azure Bicep
   - Azure Functions Core Tools 3
 - Software development languages
-  - .NET Core 3.1 SDK
+  - .NET 8.0 SDK
   - Python 3.8
   - Node 14
 - Visual Studio code extensions:
