@@ -89,6 +89,8 @@ If you want to deploy the whole solution using Terraform go to this section.
 Before getting started, you can go to the file [bicep-deploy.sh](./deploy/bash/bicep-deploy.sh), this file can make the whole process for you without a problem. The following guide is just a description of the steps in that script. If you want to run this script, you just need to run:
 
 ```bash
+cd deploy/bash
+chmod +x bicep-deploy.sh
 bash bicep-deploy.sh
 ```
 
@@ -198,6 +200,14 @@ Weather Forecast method.
 ![Response](./media/response.png)
 
 **Note**: Because you are using Api Management you will be capable of accessing the methods but won't be able to access a Swagger interface even if it is enabled (just like the sample application).
+
+### Final step: Cleaning all deployed resources
+
+After playing around with all the resources you can do a entire clean up of all the resources deployed previously by running the following command.
+
+```bash
+az group delete --name internalContainerApps --yes --no-wait
+```
 
 ## Deploy the solution using Terraform
 
