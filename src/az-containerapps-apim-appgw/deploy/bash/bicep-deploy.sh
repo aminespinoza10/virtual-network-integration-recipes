@@ -1,12 +1,14 @@
 #!/bin/bash
 
 #Section 1: Create a self-signed root certificate
-echo "Creating a self-signed root certificate"
+echo "Step 1: Creating a self-signed root certificate"
 echo "---------------------------------------"
 
 mkdir -p certs
-
 cd certs
+
+echo "Creating the root certificate and vnet-internal certificate"
+echo "-----------------------------------------------------------"
 
 # Generate the root key.
 openssl genrsa -des3 -out root-ca.key 4096
@@ -30,8 +32,17 @@ cd ..
 
 echo "Root certificate and vnet-internal certificate created successfully"
 
+CERT_DIR="./certs"
+ROOT_CERT="$CERT_DIR/root-cert.pfx"
+VNET_INTERNAL_CERT="$CERT_DIR/vnet-internal-cert.pfx"
+
+if [[ ! -f "$ROOT_CERT" || ! -f "$VNET_INTERNAL_CERT" ]]; then
+  echo "Error: Certificates not found. Please ensure that the certificates are created and located in the $CERT_DIR directory."
+  exit 1
+fi
+
 #Section 2: Create resource group in Azure
-echo "Creating pre-requisites resources in Azure"
+echo "Step 2: Creating pre-requisites resources in Azure"
 echo "-----------------------------------------"
 
 RESOURCE_GROUP="internal-bicep-rg"
@@ -39,8 +50,12 @@ LOCATION="eastus2"
 
 az group create --name $RESOURCE_GROUP --location $LOCATION
 az deployment group create --resource-group $RESOURCE_GROUP --template-file ../bicep/pre/main.bicep
-az keyvault certificate import --vault-name test-internal-001-kv --name vnet-internal --file vnet-internal-cert.pfx --password "s5p2rm1n"
-az keyvault certificate import --vault-name test-internal-001-kv --name root-cert --file root-cert.pfx --password "s5p2rm1n"
+
+USER_OBJECT_ID=$(az ad signed-in-user show --query id --output tsv)
+az keyvault set-policy --name test-internal-001-kv --resource-group $RESOURCE_GROUP --object-id $USER_OBJECT_ID --certificate-permissions import --key-permissions import --secret-permissions set
+az keyvault certificate import --vault-name test-internal-001-kv --name vnet-internal-cert --file ./certs/vnet-internal-cert.pfx --password "s5p2rm1n"
+az keyvault certificate import --vault-name test-internal-001-kv --name root-cert --file ./certs/root-cert.pfx --password "s5p2rm1n"
+az keyvault delete-policy --name test-internal-001-kv --object-id $USER_OBJECT_ID
 
 echo "Pre-requisite resources created successfully"
 echo "-------------------------------------------"
@@ -48,6 +63,14 @@ echo "-------------------------------------------"
 #Section 3: Deploy the Bicep infrastructure
 echo "Creating the main infrastructure"
 echo "--------------------------------"
+
+# Progress bar for 30 seconds
+echo -n "Waiting for 30 seconds: "
+for i in {1..30}; do
+  printf "\rWaiting for 30 seconds: %2d seconds elapsed" $i
+  sleep 1
+done
+echo ""
 
 az deployment group create --resource-group $RESOURCE_GROUP --template-file ../bicep/infrastructure/main.bicep
 
@@ -78,3 +101,6 @@ PUBLIC_IP_ID=$(az network application-gateway show --resource-group $RESOURCE_GR
 PUBLIC_IP=$(az network public-ip show --ids $PUBLIC_IP_ID --query "ipAddress" --output tsv)
 FINAL_WEATHERFORECAST_URL="http://$PUBLIC_IP/testing-app/weatherforecast"
 FINAL_HELLO_URL="http://$PUBLIC_IP/testing-app/hello"
+
+echo $FINAL_WEATHERFORECAST_URL
+echo $FINAL_HELLO_URL
