@@ -1,8 +1,9 @@
 param location string = resourceGroup().location
 param environmentName string = 'test'
-param keyVaultName string = '${environmentName}-internal-001-kv'
 param miName string = '${environmentName}-mi'
 param logAnalyticsWorkspaceName string = '${environmentName}-logs'
+
+param keyVaultName string = 'internal${uniqueString(resourceGroup().id)}-kv'
 var acrName = '${environmentName}internalapps0acr'
 
 @allowed([
@@ -54,6 +55,7 @@ resource kv 'Microsoft.KeyVault/vaults@2022-07-01' = {
           ]
           certificates: [
             'get'
+            'import'
           ]
         }
       }
@@ -66,8 +68,11 @@ resource kv 'Microsoft.KeyVault/vaults@2022-07-01' = {
       defaultAction: 'Allow'
       bypass: 'AzureServices'
     }
+    enableSoftDelete: false
   }
 }
+
+
 
 
 
@@ -85,3 +90,5 @@ resource logAnalyticsWorkspace'Microsoft.OperationalInsights/workspaces@2020-03-
     }
   })
 }
+
+output keyVaultName string = kv.name

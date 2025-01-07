@@ -206,7 +206,7 @@ Weather Forecast method.
 After playing around with all the resources you can do a entire clean up of all the resources deployed previously by running the following command.
 
 ```bash
-az group delete --name internalContainerApps --yes --no-wait
+az group delete --name internal-bicep-rg --yes --no-wait
 ```
 
 ## Deploy the solution using Terraform

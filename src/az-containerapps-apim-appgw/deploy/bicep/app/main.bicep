@@ -2,7 +2,7 @@ param location string = resourceGroup().location
 param environmentName string = 'test'
 param dnsName string = 'vnet.internal'
 
-var apimName = '${environmentName}-internal-001-apim'
+var apimName = '${environmentName}-internal-007-apim'
 var apiName = 'testing-app'
 var acrName = '${environmentName}internalapps0acr'
 
